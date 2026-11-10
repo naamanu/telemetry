@@ -204,6 +204,10 @@ CI runs dependency, code, test, build, and release-safety checks for TypeScript 
 The TypeScript job also packs each npm package that has a release version and fails when a target of its `exports` or `bin` is not in the tarball.
 The [SDK conformance guide](docs/sdk-conformance.md) defines the shared telemetry format and behavior.
 
+To retain error and slow traces alongside a baseline sample, see the runnable
+[Collector tail sampling example](examples/tail-sampling). It includes SDK routing,
+a local verification command, and the limits of sampling for sessions and analytics.
+
 Maintainers: [RELEASING.md](RELEASING.md) describes versioning, publishing, and release retries.
 
 ## License

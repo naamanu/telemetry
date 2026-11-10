@@ -1,0 +1,58 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: ${env:OTEL_HTTP_ENDPOINT:-0.0.0.0:4318}
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  tail_sampling:
+    decision_wait: ${env:TAIL_SAMPLING_DECISION_WAIT:-30s}
+    num_traces: 10000
+    expected_new_traces_per_sec: 100
+    decision_cache:
+      sampled_cache_size: 100000
+      non_sampled_cache_size: 100000
+    # A match in any policy keeps the trace, including its successful spans.
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 5000
+      - name: baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+  batch:
+    timeout: 1s
+    send_batch_size: 64
+    send_batch_max_size: 64
+
+exporters:
+  otlp_http/telemetry:
+    endpoint: ${env:TELEMETRY_DEV_BASE_URL:-https://api.telemetry.dev}
+    headers:
+      Authorization: Bearer ${env:TELEMETRY_DEV_API_KEY}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, tail_sampling, batch]
+      exporters: [otlp_http/telemetry]
+    # Route SDK metrics and logs too; neither passes through trace sampling.
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_http/telemetry]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_http/telemetry]
