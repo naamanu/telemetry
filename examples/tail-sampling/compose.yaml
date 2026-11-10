@@ -1,0 +1,13 @@
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "127.0.0.1:4318:4318"
+    environment:
+      TELEMETRY_DEV_API_KEY: ${TELEMETRY_DEV_API_KEY:?Set a telemetry.dev project API key}
+      TELEMETRY_DEV_BASE_URL: ${TELEMETRY_DEV_BASE_URL:-https://api.telemetry.dev}
+      TAIL_SAMPLING_DECISION_WAIT: ${TAIL_SAMPLING_DECISION_WAIT:-30s}
+    volumes:
+      - ./collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    mem_limit: 512m
